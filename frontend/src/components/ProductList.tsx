@@ -1,18 +1,40 @@
 import React from 'react';
 import ProductCard from './ProductCard';
+import Pagination from './Pagination';
+import { useProducts } from '../hooks/useProducts';
+import { useState } from 'react';
 
 const ProductList = () => {
-  const products = [
-    { id: 1, name: 'Running Shoes', price: 50 },
-    { id: 2, name: 'Casual Sneakers', price: 40 },
-    { id: 3, name: 'Formal Shoes', price: 70 },
-  ];
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+
+  const { products, loading, error, totalItems } = useProducts({
+    page: currentPage,
+    pageSize
+  });
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  }
+
+  if (loading) return <div>Loading products...</div>;
+  if (error) return <div>Error loading products: {error}</div>;
+  if (!products?.length) return <div>No products found</div>;
 
   return (
-    <div className="product-list">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
+    <div>
+      <div className="product-list">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
+        isLoading={loading}
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-namespace backend.Models
+namespace Backend.Models
 {
     public class Product
     {
@@ -6,6 +6,6 @@ namespace backend.Models
         public string? Brand { get; set; }
         public string? Description { get; set; }
         public string? Image { get; set; }
-        public decimal Price { get; set; }
+        public string? Price { get; set; }
     }
 }

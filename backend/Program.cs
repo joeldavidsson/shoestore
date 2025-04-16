@@ -6,11 +6,16 @@ using Microsoft.AspNetCore.Mvc;
 using Stripe;
 using System.Text;
 using DotNetEnv;
+using Services;
+using Backend.Interfaces;
+using Backend.Services;
+using Backend.Repositories;
+using Backend.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Load environment variables from the .env file
-DotNetEnv.Env.Load("../.env");
+Env.Load("../.env");
 
 // Read the connection string from environment variables
 var connectionString = $"Host={Environment.GetEnvironmentVariable("POSTGRES_HOST")};" +
@@ -32,8 +37,18 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHttpClient<ProductApiService>();
+builder.Services.AddScoped<ExternalApiService>();
+builder.Services.AddScoped<IProductService, Backend.Services.ProductService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 // Configure Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
@@ -47,20 +62,54 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
+    var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
+    var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+    var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+
+    if (string.IsNullOrEmpty(jwtKey) || string.IsNullOrEmpty(jwtIssuer) || string.IsNullOrEmpty(jwtAudience))
+    {
+        throw new InvalidOperationException("JWT configuration is missing in environment variables.");
+    }
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured")))
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
 
+Console.WriteLine($"JWT_KEY loaded: {!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JWT_KEY"))}");
+Console.WriteLine($"JWT_ISSUER: {Environment.GetEnvironmentVariable("JWT_ISSUER")}");
+Console.WriteLine($"JWT_AUDIENCE: {Environment.GetEnvironmentVariable("JWT_AUDIENCE")}");
+
 // Configure Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+
+// Configure ProductApiService HttpClient
+builder.Services.AddHttpClient<ExternalApiService>(client =>
+{
+    var baseUrl = Environment.GetEnvironmentVariable("RAPIDAPI__URL");
+    var apiKey = Environment.GetEnvironmentVariable("RAPIDAPI__KEY");
+    var apiHost = Environment.GetEnvironmentVariable("RAPIDAPI__HOST");
+
+    if (string.IsNullOrEmpty(baseUrl) || string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiHost))
+    {
+        throw new InvalidOperationException("RapidAPI configuration is missing in environment variables.");
+    }
+
+    client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestHeaders.Add("X-RapidAPI-Key", apiKey);
+    client.DefaultRequestHeaders.Add("X-RapidAPI-Host", apiHost);
+});
+
+Console.WriteLine($"RAPIDAPI__URL: {Environment.GetEnvironmentVariable("RAPIDAPI__URL")}");
+Console.WriteLine($"RAPIDAPI__KEY: {Environment.GetEnvironmentVariable("RAPIDAPI__KEY")}");
+Console.WriteLine($"RAPIDAPI__HOST: {Environment.GetEnvironmentVariable("RAPIDAPI__HOST")}");
 
 var app = builder.Build();
 
@@ -72,10 +121,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map API controllers
-app.MapControllers().WithMetadata(new RouteAttribute("api/[controller]"));
+app.MapControllers();
 
 app.Run();
