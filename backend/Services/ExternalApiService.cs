@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Backend.Models;
 
-namespace Services
+namespace Backend.Services
 {
   public class ExternalApiService(HttpClient httpClient)
   {

@@ -22,7 +22,11 @@ namespace Backend.Models.DTOs
     public int Quantity { get; set; }
   }
 
-  public record UpdateCartItemQuantityDto(int Quantity);
+  public class UpdateCartItemQuantityDto
+  {
+    public int CartItemId { get; set; }
+    public int Quantity { get; set; }
+  }
 
   public class AddCartItemDto
   {

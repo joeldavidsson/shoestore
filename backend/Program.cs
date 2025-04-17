@@ -5,7 +5,6 @@ using Microsoft.IdentityModel.Tokens;
 using Stripe;
 using System.Text;
 using DotNetEnv;
-using Services;
 using Backend.Interfaces;
 using Backend.Data;
 using Backend.Models;
@@ -85,10 +84,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-Console.WriteLine($"JWT_KEY loaded: {!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JWT_KEY"))}");
-Console.WriteLine($"JWT_ISSUER: {Environment.GetEnvironmentVariable("JWT_ISSUER")}");
-Console.WriteLine($"JWT_AUDIENCE: {Environment.GetEnvironmentVariable("JWT_AUDIENCE")}");
-
 // Configure Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
@@ -108,10 +103,6 @@ builder.Services.AddHttpClient<ExternalApiService>(client =>
     client.DefaultRequestHeaders.Add("X-RapidAPI-Key", apiKey);
     client.DefaultRequestHeaders.Add("X-RapidAPI-Host", apiHost);
 });
-
-Console.WriteLine($"RAPIDAPI__URL: {Environment.GetEnvironmentVariable("RAPIDAPI__URL")}");
-Console.WriteLine($"RAPIDAPI__KEY: {Environment.GetEnvironmentVariable("RAPIDAPI__KEY")}");
-Console.WriteLine($"RAPIDAPI__HOST: {Environment.GetEnvironmentVariable("RAPIDAPI__HOST")}");
 
 var app = builder.Build();
 
