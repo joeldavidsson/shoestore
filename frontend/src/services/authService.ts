@@ -2,34 +2,53 @@ import {
   User,
   AuthResponse,
   LoginCredentials,
-  RegisterCredentials,
+  RegisterFormData,
 } from '../types/auth';
 
 const API_URL = 'http://localhost:5236/api/auth';
 
 export const authService = {
   async login({ email, password }: LoginCredentials): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      console.log('Attempting login with:', { email }); // Don't log password
 
-    if (!response.ok) {
-      throw new Error('Invalid credentials');
-    }
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await response.json();
-    if (data.token) {
+      const data = await response.json();
+      console.log('Login response:', {
+        status: response.status,
+        ok: response.ok,
+        data,
+      });
+
+      if (!response.ok) {
+        throw new Error(data.message || data.title || 'Login failed');
+      }
+
+      if (!data.token || !data.user) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from server');
+      }
+
+      // Store auth data
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+
+      return data;
+    } catch (error) {
+      console.error('Login error details:', error);
+      throw error;
     }
-    return data;
   },
 
-  async register(credentials: RegisterCredentials): Promise<void> {
+  async register(credentials: RegisterFormData): Promise<void> {
     const response = await fetch(`${API_URL}/register`, {
       method: 'POST',
       headers: {
@@ -38,7 +57,14 @@ export const authService = {
       body: JSON.stringify({
         email: credentials.email,
         password: credentials.password,
-        confirmPassword: credentials.password, // Make sure this matches
+        confirmPassword: credentials.confirmPassword,
+        firstName: credentials.firstName,
+        lastName: credentials.lastName,
+        phoneNumber: credentials.phoneNumber,
+        address: credentials.address,
+        zipCode: credentials.zipCode,
+        city: credentials.city,
+        country: credentials.country,
       }),
     });
 

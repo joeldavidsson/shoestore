@@ -8,16 +8,12 @@ html {
 }
 
 .app {
+  display: flex;
+  flex-direction: column;
   text-align: center;
   min-height: 100vh;
   width: 100%;
   max-width: 100%;
-}
-
-.app footer {
-  position: relative;
-  bottom: 0;
-  width: 100%;
 }
 
 body {
@@ -29,10 +25,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
   width: 100%;
   max-width: 100%;
+  min-height: 100vh;
 }
 
-.header,
+main {
+  flex: 1 0 auto;
+}
+
+.header {
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}
+
 .footer {
+  flex-shrink: 0;
   background-color: #333;
   color: white;
   text-align: center;

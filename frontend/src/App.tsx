@@ -15,20 +15,22 @@ const App = () => {
     <AuthProvider>
       <div className="app">
         <Header />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/product/:id" element={<ProductDetailsPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route
-            path="/cart"
-            element={
-              <ProtectedRoute>
-                <CartPage />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+        <main>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/product/:id" element={<ProductDetailsPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/cart"
+              element={
+                <ProtectedRoute>
+                  <CartPage />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </main>
         <Footer />
       </div>
     </AuthProvider>

@@ -16,8 +16,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const data = await authService.login({ email, password });
+  const login = async (credentials: { email: string; password: string }) => {
+    const data = await authService.login(credentials);
     setIsAuthenticated(true);
     setUser(data.user);
   };
@@ -28,11 +28,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(null);
   };
 
-  const register = async (email: string, password: string) => {
-    await authService.register({
-      email, password,
-      confirmPassword: ''
-    });
+  const register = async (credentials: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    address: string;
+    zipCode: string;
+    city: string;
+    country: string;
+  }) => {
+    await authService.register(credentials);
   };
 
   return (

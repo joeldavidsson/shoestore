@@ -2,15 +2,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Mvc;
 using Stripe;
 using System.Text;
 using DotNetEnv;
 using Services;
 using Backend.Interfaces;
-using Backend.Services;
-using Backend.Repositories;
 using Backend.Data;
+using Backend.Models;
+using Backend.Repositories;
+using Backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +39,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ExternalApiService>();
 builder.Services.AddScoped<IProductService, Backend.Services.ProductService>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 builder.Services.AddCors(options =>
 {

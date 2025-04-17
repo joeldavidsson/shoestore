@@ -1,49 +1,83 @@
+using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
 using Backend.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
-namespace Backend.Repositories;
-
-public class CartRepository : ICartRepository
+namespace Backend.Repositories
 {
-  private readonly ApplicationDbContext _context;
-
-  public CartRepository(ApplicationDbContext context)
+  public class CartRepository : ICartRepository
   {
-    _context = context;
-  }
+    private readonly ApplicationDbContext _context;
 
-  public async Task<Cart> GetCartByUserIdAsync(string userId)
-  {
-    return await _context.Carts
-        .Include(c => c.Items)
-        .FirstOrDefaultAsync(c => c.UserId == userId) ?? throw new InvalidOperationException("Cart not found.");
-  }
-
-  public async Task<Cart> AddToCartAsync(string userId, CartItem item)
-  {
-    var cart = await GetCartByUserIdAsync(userId);
-    if (cart == null)
+    public CartRepository(ApplicationDbContext context)
     {
-      cart = new Cart { UserId = userId };
-      _context.Carts.Add(cart);
+      _context = context;
     }
 
-    cart.Items.Add(item);
-    await _context.SaveChangesAsync();
-    return cart;
-  }
+    public async Task<Cart> GetByUserIdAsync(string userId)
+    {
+      var cart = await _context.Carts
+          .Include(c => c.Items)
+          .FirstOrDefaultAsync(c => c.UserId == userId);
 
-  public async Task<bool> RemoveFromCartAsync(string userId, int productId)
-  {
-    var cart = await GetCartByUserIdAsync(userId);
-    var item = cart?.Items.FirstOrDefault(i => i.ProductId == productId);
+      if (cart == null)
+      {
+        cart = new Cart { UserId = userId };
+        _context.Carts.Add(cart);
+        await _context.SaveChangesAsync();
+      }
 
-    if (item == null) return false;
+      return cart;
+    }
 
-    cart?.Items.Remove(item);
-    await _context.SaveChangesAsync();
-    return true;
+    public async Task<Cart> AddItemAsync(string userId, CartItem item)
+    {
+      var cart = await GetByUserIdAsync(userId);
+      var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == item.ProductId);
+
+      if (existingItem != null)
+      {
+        existingItem.Quantity += item.Quantity;
+      }
+      else
+      {
+        cart.Items.Add(item);
+      }
+
+      cart.LastModified = DateTime.UtcNow;
+      await _context.SaveChangesAsync();
+      return cart;
+    }
+
+    public async Task<Cart> UpdateItemQuantityAsync(string userId, int productId, int quantity)
+    {
+      var cart = await GetByUserIdAsync(userId);
+      var item = cart.Items.FirstOrDefault(i => i.ProductId == productId)
+          ?? throw new KeyNotFoundException("Item not found in cart");
+
+      item.Quantity = quantity;
+      cart.LastModified = DateTime.UtcNow;
+      await _context.SaveChangesAsync();
+      return cart;
+    }
+
+    public async Task RemoveItemAsync(string userId, int productId)
+    {
+      var cart = await GetByUserIdAsync(userId);
+      var item = cart.Items.FirstOrDefault(i => i.ProductId == productId)
+          ?? throw new KeyNotFoundException("Item not found in cart");
+
+      cart.Items.Remove(item);
+      cart.LastModified = DateTime.UtcNow;
+      await _context.SaveChangesAsync();
+    }
+
+    public async Task ClearAsync(string userId)
+    {
+      var cart = await GetByUserIdAsync(userId);
+      cart.Items.Clear();
+      cart.LastModified = DateTime.UtcNow;
+      await _context.SaveChangesAsync();
+    }
   }
 }

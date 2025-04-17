@@ -14,12 +14,10 @@ namespace Backend.Controllers
   public class AuthController : ControllerBase
   {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IConfiguration _configuration;
 
-    public AuthController(UserManager<ApplicationUser> userManager, IConfiguration configuration)
+    public AuthController(UserManager<ApplicationUser> userManager)
     {
       _userManager = userManager;
-      _configuration = configuration;
     }
 
     [HttpPost("register")]
@@ -28,7 +26,19 @@ namespace Backend.Controllers
       if (model.Password != model.ConfirmPassword)
         return BadRequest("Passwords do not match");
 
-      var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+      var user = new ApplicationUser
+      {
+        UserName = model.Email,
+        Email = model.Email,
+        FirstName = model.FirstName,
+        LastName = model.LastName,
+        PhoneNumber = model.PhoneNumber,
+        Address = model.Address,
+        ZipCode = model.ZipCode,
+        City = model.City,
+        Country = model.Country
+      };
+
       var result = await _userManager.CreateAsync(user, model.Password);
 
       if (result.Succeeded)
@@ -58,38 +68,45 @@ namespace Backend.Controllers
         User = new UserDto
         {
           Id = user.Id,
-          Email = user.Email!
+          Email = user.Email!,
+          FirstName = user.FirstName,
+          LastName = user.LastName,
+          PhoneNumber = user.PhoneNumber!,
+          Address = user.Address,
+          ZipCode = user.ZipCode,
+          City = user.City,
+          Country = user.Country
         }
       });
     }
 
     private string GenerateJwtToken(ApplicationUser user)
     {
-        var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
-        if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
-        {
-            throw new InvalidOperationException("JWT_KEY must be at least 32 characters long");
-        }
+      var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
+      if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
+      {
+        throw new InvalidOperationException("JWT_KEY must be at least 32 characters long");
+      }
 
-        var claims = new[]
-        {
+      var claims = new[]
+      {
             new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(ClaimTypes.Email, user.Email!)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.Now.AddDays(7);
+      var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+      var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+      var expires = DateTime.Now.AddDays(7);
 
-        var token = new JwtSecurityToken(
-            issuer: Environment.GetEnvironmentVariable("JWT_ISSUER"),
-            audience: Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
-            claims: claims,
-            expires: expires,
-            signingCredentials: creds
-        );
+      var token = new JwtSecurityToken(
+          issuer: Environment.GetEnvironmentVariable("JWT_ISSUER"),
+          audience: Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
+          claims: claims,
+          expires: expires,
+          signingCredentials: creds
+      );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+      return new JwtSecurityTokenHandler().WriteToken(token);
     }
   }
 }

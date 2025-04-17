@@ -1,6 +1,13 @@
 export interface User {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  address: string;
+  zipCode: string;
+  city: string;
+  country: string;
 }
 
 export interface AuthResponse {
@@ -13,15 +20,24 @@ export interface LoginCredentials {
   password: string;
 }
 
-export interface RegisterCredentials extends LoginCredentials {
+export interface RegisterFormData {
+  email: string;
+  password: string;
   confirmPassword: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  address: string;
+  zipCode: string;
+  city: string;
+  country: string;
 }
 
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterFormData) => Promise<void>;
   logout: () => void;
 }
 

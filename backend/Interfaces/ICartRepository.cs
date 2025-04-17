@@ -1,11 +1,13 @@
 using Backend.Models;
-using Backend.Repositories;
 
-namespace Backend.Interfaces;
-
-public interface ICartRepository
+namespace Backend.Interfaces
 {
-  Task<Cart> GetCartByUserIdAsync(string userId);
-  Task<Cart> AddToCartAsync(string userId, CartItem item);
-  Task<bool> RemoveFromCartAsync(string userId, int productId);
+  public interface ICartRepository
+  {
+    Task<Cart> GetByUserIdAsync(string userId);
+    Task<Cart> AddItemAsync(string userId, CartItem item);
+    Task<Cart> UpdateItemQuantityAsync(string userId, int productId, int quantity);
+    Task RemoveItemAsync(string userId, int productId);
+    Task ClearAsync(string userId);
+  }
 }
